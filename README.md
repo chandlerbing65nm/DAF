@@ -4,7 +4,6 @@
 
 ## Requirements 
 - [Python 3.10.13](https://www.python.org/)
-- [CUDA 11.8](https://developer.nvidia.com/cuda-zone)
 - [PyTorch 2.1.2](https://pytorch.org/)
 - [MMSegmentation 1.2.2](https://github.com/open-mmlab/mmsegmentation)
 
@@ -22,21 +21,29 @@ pip install -U openmim
 mim install -r requirements.txt
 ```
 
+> **Note:** All experiments were conducted on a single AMD Instinct MI200 GPU with ROCm 5.6.
+
 ---
 ### Step 2: Prepare Datasets
 
-We evaluate MLMP on seven widely-used segmentation benchmarks, chosen to span indoor/outdoor scenes, object–stuff mixes, and a range of class granularities:
+We evaluate DAF on PASCAL VOC 2012, using two class configurations:
 
-- [PASCAL VOC 20/21](https://paperswithcode.com/dataset/pascal-voc) – The 20 foreground categories (with an optional challenging background label).
+- **PASCAL VOC 20** – The 20 foreground categories (background excluded).
+- **PASCAL VOC 21** – The 20 foreground categories plus a challenging background label.
 
 Please follow the [MMSeg data preparation document](https://github.com/open-mmlab/mmsegmentation/blob/main/docs/en/user_guides/2_dataset_prepare.md) to download and pre-process the datasets. Please note that we only use the validation split of each dataset.
 
-Additionally, inspired by [ImageNet-C](https://github.com/hendrycks/robustness), we generate 15 corruption types (e.g., noise, blur, weather, compression) *on-the-fly* at test time, allowing us to effectively evaluate each adaptation method’s robustness to diverse distribution shifts. 
+Additionally, inspired by [ImageNet-C](https://github.com/hendrycks/robustness), we generate 15 corruption types (e.g., noise, blur, weather, compression) *on-the-fly* at test time, allowing us to effectively evaluate each adaptation method's robustness to diverse distribution shifts. 
 
 ---
 ### Step 3: Perform Adaptation
 
-There are different bash files in `./bash` directory which are prepared to reproduce the results of the paper for **different methods**, **datasets**, and **corruptions**.
+DAF supports two adaptation methods:
+
+- **TENT** – Entropy minimization over visual encoder LayerNorm parameters.
+- **MLMP** – Multi-level multi-prompt optimization with entropy, diversity, and cross-modal anchor consistency losses.
+
+The following example runs MLMP adaptation on PASCAL VOC 20:
 
 ```python
 python main.py \
@@ -60,7 +67,7 @@ python main.py \
     --token_merge False --merge_type algm \
     --algm_layers 1 7 --algm_threshold 0.8 --algm_window_size 2 2 \
     --save_dir .save/PascalVOC20Dataset/mlmp/ \
-    --data_dir /scratch/project_465002853/datasets/VOCdevkit/VOC2012/ \
+    --data_dir /path/to/VOCdevkit/VOC2012/ \
     --dataset PascalVOC20Dataset \
     --workers 4 \
     --init_resize 224 224 \
@@ -84,12 +91,11 @@ python main.py \
     --save_k 10 \
 ```
 
+To use TENT instead, change `--method mlmp` to `--method tent` and remove the MLMP-specific arguments (`--vision_outputs`, `--alpha_cls`, `--loss_feat_cons`, `--feat_cons_type`). To evaluate on PASCAL VOC 21, change `--dataset PascalVOC20Dataset` to `--dataset PascalVOC21Dataset` and update `--save_dir` accordingly.
+
 ---
 ## License
 
 This source code is released under the MIT license, which can be found [here](LICENCE). This project integrates elements from the following repositories; we gratefully acknowledge the authors for making their work open-source:
 - [MLMP](https://github.com/dosowiechi/MLMP) (MIT licensed)
-- [WATT](https://github.com/mehrdad-noori/watt) (MIT licensed)
-- [NACLIP](https://github.com/sinahmr/NACLIP) (MIT licensed)
-- [CLIP](https://github.com/openai/CLIP/tree/main/clip) (MIT licensed)
 - [TENT](https://github.com/DequanWang/tent) (MIT licensed)
