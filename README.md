@@ -1,0 +1,95 @@
+
+# Towards Continual Test-Time Adaptation of Vision-Language Models in Open-Vocabulary Semantic Segmentation
+
+
+## Requirements 
+- [Python 3.10.13](https://www.python.org/)
+- [CUDA 11.8](https://developer.nvidia.com/cuda-zone)
+- [PyTorch 2.1.2](https://pytorch.org/)
+- [MMSegmentation 1.2.2](https://github.com/open-mmlab/mmsegmentation)
+
+
+## Getting Started
+### Step 1: Requirements
+To run DAF, please install the following packages, and conda environment:
+
+```bash
+conda create -n daf python==3.10.13
+conda activate daf
+pip install "numpy<2"
+pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/rocm5.6
+pip install -U openmim
+mim install -r requirements.txt
+```
+
+---
+### Step 2: Prepare Datasets
+
+We evaluate MLMP on seven widely-used segmentation benchmarks, chosen to span indoor/outdoor scenes, object–stuff mixes, and a range of class granularities:
+
+- [PASCAL VOC 20/21](https://paperswithcode.com/dataset/pascal-voc) – The 20 foreground categories (with an optional challenging background label).
+
+Please follow the [MMSeg data preparation document](https://github.com/open-mmlab/mmsegmentation/blob/main/docs/en/user_guides/2_dataset_prepare.md) to download and pre-process the datasets. Please note that we only use the validation split of each dataset.
+
+Additionally, inspired by [ImageNet-C](https://github.com/hendrycks/robustness), we generate 15 corruption types (e.g., noise, blur, weather, compression) *on-the-fly* at test time, allowing us to effectively evaluate each adaptation method’s robustness to diverse distribution shifts. 
+
+---
+### Step 3: Perform Adaptation
+
+There are different bash files in `./bash` directory which are prepared to reproduce the results of the paper for **different methods**, **datasets**, and **corruptions**.
+
+```python
+python main.py \
+    --adapt \
+    --method mlmp \
+    --loss_ent True --lamb_ent 1.0 \
+    --loss_div True --lamb_div 2.0 \
+    --loss_cmac True --lamb_cmac 0.5 \
+    --loss_src_cons False --lamb_src_cons 0.5 \
+    --loss_feat_cons False --lamb_feat_cons 0.5 --feat_cons_type cosine \
+    --loss_feat_cons False --lamb_feat_cons 0.5 --feat_cons_type l2 \
+    --module_safs True --alpha_safs 0.5 \
+    --diag_div False \
+    --diag_cmac False \
+    --diag_safs False \
+    --prompt_dir prompts.yaml \
+    --vision_outputs -1 -2 -3 -4 -5 -6 -7 -8 -9 \
+    --alpha_cls 1.0 \
+    --ovss_type naclip \
+    --ovss_backbone ViT-B/32 \
+    --token_merge False --merge_type algm \
+    --algm_layers 1 7 --algm_threshold 0.8 --algm_window_size 2 2 \
+    --save_dir .save/PascalVOC20Dataset/mlmp/ \
+    --data_dir /scratch/project_465002853/datasets/VOCdevkit/VOC2012/ \
+    --dataset PascalVOC20Dataset \
+    --workers 4 \
+    --init_resize 224 224 \
+    --patch_size 224 224 \
+    --patch_stride 112 \
+    --corruptions_list gaussian_noise shot_noise impulse_noise defocus_blur glass_blur motion_blur zoom_blur snow frost fog brightness contrast elastic_transform pixelate jpeg_compression \
+    --lr 1e-3 \
+    --optimizer sgd  \
+    --steps 1 \
+    --batch-size 8 \
+    --trials 1 \
+    --seed "$SEED" \
+    --plot_loss \
+    --class_extensions \
+    --reset_mode continual \
+    --domain_gen False \
+    --domain_gen_num 5 \
+    --lifelong None \
+    --lifelong_rnds 3 \
+    --save_demo False \
+    --save_k 10 \
+```
+
+---
+## License
+
+This source code is released under the MIT license, which can be found [here](LICENCE). This project integrates elements from the following repositories; we gratefully acknowledge the authors for making their work open-source:
+- [MLMP](https://github.com/dosowiechi/MLMP) (MIT licensed)
+- [WATT](https://github.com/mehrdad-noori/watt) (MIT licensed)
+- [NACLIP](https://github.com/sinahmr/NACLIP) (MIT licensed)
+- [CLIP](https://github.com/openai/CLIP/tree/main/clip) (MIT licensed)
+- [TENT](https://github.com/DequanWang/tent) (MIT licensed)

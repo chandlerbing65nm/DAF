@@ -1,0 +1,6 @@
+conda create -n clip python==3.10.13
+conda activate clip
+pip install "numpy<2"
+pip install torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/rocm5.6
+pip install -U openmim
+mim install -r requirements.txt

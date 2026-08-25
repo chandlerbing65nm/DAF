@@ -1,0 +1,14 @@
+road
+sidewalk
+building
+wall
+fence
+pole
+traffic light, trafficlight
+traffic sign, trafficsign
+vegetation
+terrain
+sky
+person
+vehicle
+road line, roadline
