@@ -390,16 +390,10 @@ def add_method_specific_args(parser, method):
             help='Enable Cross-Modal Anchor Consistency loss (True/False)'
         )
         parser.add_argument(
-            '--lamb_cmac_p1',
+            '--lamb_cmac',
             type=float,
             default=1.0,
-            help='Lambda multiplier for CMAC loss_away'
-        )
-        parser.add_argument(
-            '--lamb_cmac_p2',
-            type=float,
-            default=1.0,
-            help='Lambda multiplier for CMAC loss_toward'
+            help='Lambda multiplier for CMAC loss'
         )
         parser.add_argument(
             '--loss_src_cons',
@@ -495,16 +489,10 @@ def add_method_specific_args(parser, method):
             help='Enable Cross-Modal Anchor Consistency loss (True/False)'
         )
         parser.add_argument(
-            '--lamb_cmac_p1',
+            '--lamb_cmac',
             type=float,
             default=1.0,
-            help='Lambda multiplier for CMAC loss_away'
-        )
-        parser.add_argument(
-            '--lamb_cmac_p2',
-            type=float,
-            default=1.0,
-            help='Lambda multiplier for CMAC loss_toward'
+            help='Lambda multiplier for CMAC loss'
         )
         parser.add_argument(
             '--loss_src_cons',

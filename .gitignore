@@ -105,3 +105,5 @@ venv.bak/
 logs/
 .save/
 diagnostics/
+
+bash.sh
