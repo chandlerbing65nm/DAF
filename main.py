@@ -38,7 +38,7 @@ def validate_token_merge_args(args):
     if not getattr(args, 'token_merge', False):
         return
 
-    supported_methods = {'tent', 'mlmp', 'method'}
+    supported_methods = {'tent', 'mlmp', 'method', 'segtto'}
     if args.method not in supported_methods:
         raise ValueError(
             f"--token_merge is only supported for methods {sorted(supported_methods)}; got {args.method}."
@@ -340,7 +340,33 @@ def add_method_specific_args(parser, method):
     '''
     Add method-specific arguments to the parser
     '''
-    if method == 'mlmp':
+    if method == 'batclip':
+        parser.add_argument(
+            '--loss_ent',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Enable entropy minimization loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_ent',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for entropy minimization loss'
+        )
+        parser.add_argument(
+            '--batclip_lambda_i2t',
+            type=float,
+            default=1.0,
+            help='Weight for BATCLIP image-to-text alignment loss'
+        )
+        parser.add_argument(
+            '--batclip_lambda_inter',
+            type=float,
+            default=1.0,
+            help='Weight for BATCLIP inter-class mean separation loss'
+        )
+
+    elif method == 'mlmp':
         parser.add_argument(
             '--vision_outputs',
             nargs='+',
@@ -489,10 +515,16 @@ def add_method_specific_args(parser, method):
             help='Enable Cross-Modal Anchor Consistency loss (True/False)'
         )
         parser.add_argument(
-            '--lamb_cmac',
+            '--lamb_cmac_p1',
             type=float,
             default=1.0,
-            help='Lambda multiplier for CMAC loss'
+            help='Lambda multiplier for CMAC loss_away'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p2',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC loss_toward'
         )
         parser.add_argument(
             '--loss_src_cons',
@@ -536,6 +568,172 @@ def add_method_specific_args(parser, method):
             type=float,
             default=0.5,
             help='Margin parameter for SAFS adaptive threshold'
+        )
+        parser.add_argument(
+            '--diag_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable CMAC diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable DIV diagnostic justification analysis (True/False)'
+        )
+
+    elif method == 'rpl':
+        parser.add_argument(
+            '--rpl_q',
+            type=float,
+            default=0.8,
+            help='Q parameter for Generalized Cross Entropy loss (default: 0.8)'
+        )
+        parser.add_argument(
+            '--loss_ent',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Enable entropy minimization loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_ent',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for entropy minimization loss'
+        )
+        parser.add_argument(
+            '--loss_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable class-wise diversity loss to prevent model collapse (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_div',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for diversity loss'
+        )
+        parser.add_argument(
+            '--loss_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable Cross-Modal Anchor Consistency loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_cmac',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC loss'
+        )
+        parser.add_argument(
+            '--module_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS sample filtering module (True/False)'
+        )
+        parser.add_argument(
+            '--alpha_safs',
+            type=float,
+            default=0.5,
+            help='Alpha parameter for SAFS adaptive threshold'
+        )
+        parser.add_argument(
+            '--diag_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable CMAC diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable DIV diagnostic justification analysis (True/False)'
+        )
+
+    elif method == 'sar':
+        parser.add_argument(
+            '--sar_margin_e0',
+            type=float,
+            default=0.4,
+            help='Margin E_0 coefficient for reliable entropy filtering (multiplied by log(num_classes))'
+        )
+        parser.add_argument(
+            '--sar_reset_constant_em',
+            type=float,
+            default=0.2,
+            help='EMA threshold for model recovery (reset if EMA < this value)'
+        )
+        parser.add_argument(
+            '--sar_rho',
+            type=float,
+            default=0.05,
+            help='Perturbation radius for SAM optimizer'
+        )
+        parser.add_argument(
+            '--loss_ent',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Enable entropy minimization loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_ent',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for entropy minimization loss'
+        )
+        parser.add_argument(
+            '--loss_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable class-wise diversity loss to prevent model collapse (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_div',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for diversity loss'
+        )
+        parser.add_argument(
+            '--loss_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable Cross-Modal Anchor Consistency loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p1',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC away loss'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p2',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC toward loss'
+        )
+        parser.add_argument(
+            '--module_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS sample filtering module (True/False)'
+        )
+        parser.add_argument(
+            '--alpha_safs',
+            type=float,
+            default=0.5,
+            help='Alpha parameter for SAFS adaptive threshold'
         )
         parser.add_argument(
             '--diag_safs',
@@ -612,10 +810,313 @@ def add_method_specific_args(parser, method):
             help='Enable Cross-Modal Anchor Consistency loss (True/False)'
         )
         parser.add_argument(
-            '--lamb_cmac',
+            '--lamb_cmac_p1',
             type=float,
             default=1.0,
-            help='Lambda multiplier for CMAC loss'
+            help='Lambda multiplier for CMAC away loss'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p2',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC toward loss'
+        )
+        parser.add_argument(
+            '--module_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS sample filtering module (True/False)'
+        )
+        parser.add_argument(
+            '--alpha_safs',
+            type=float,
+            default=0.5,
+            help='Alpha parameter for SAFS adaptive threshold'
+        )
+        parser.add_argument(
+            '--diag_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable CMAC diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable DIV diagnostic justification analysis (True/False)'
+        )
+
+    elif method == 'deyo':
+        parser.add_argument(
+            '--deyo_reweight_ent',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Reweight entropy loss by inverse exp of entropy (True/False)'
+        )
+        parser.add_argument(
+            '--deyo_reweight_plpd',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Reweight entropy loss by inverse exp of PLPD (True/False)'
+        )
+        parser.add_argument(
+            '--deyo_plpd',
+            type=float,
+            default=0.2,
+            help='PLPD threshold for filtering samples'
+        )
+        parser.add_argument(
+            '--deyo_margin',
+            type=float,
+            default=0.5,
+            help='Margin coefficient for entropy filtering (multiplied by log(num_classes))'
+        )
+        parser.add_argument(
+            '--deyo_aug_type',
+            type=str,
+            default='patch',
+            choices=['occ', 'patch', 'pixel'],
+            help='Augmentation type for PLPD computation'
+        )
+        parser.add_argument(
+            '--deyo_occlusion_size',
+            type=int,
+            default=112,
+            help='Occlusion patch size (for aug_type occ)'
+        )
+        parser.add_argument(
+            '--deyo_row_start',
+            type=int,
+            default=56,
+            help='Row start position for occlusion (for aug_type occ)'
+        )
+        parser.add_argument(
+            '--deyo_column_start',
+            type=int,
+            default=56,
+            help='Column start position for occlusion (for aug_type occ)'
+        )
+        parser.add_argument(
+            '--deyo_patch_len',
+            type=int,
+            default=4,
+            help='Patch grid size for shuffling (for aug_type patch)'
+        )
+        parser.add_argument(
+            '--deyo_margin_e0',
+            type=float,
+            default=0.4,
+            help='EATA margin E_0 for reweighting (multiplied by log(num_classes))'
+        )
+        parser.add_argument(
+            '--loss_ent',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Enable entropy minimization loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_ent',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for entropy minimization loss'
+        )
+        parser.add_argument(
+            '--loss_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable class-wise diversity loss to prevent model collapse (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_div',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for diversity loss'
+        )
+        parser.add_argument(
+            '--loss_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable Cross-Modal Anchor Consistency loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p1',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC away loss'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p2',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC toward loss'
+        )
+        parser.add_argument(
+            '--module_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS sample filtering module (True/False)'
+        )
+        parser.add_argument(
+            '--alpha_safs',
+            type=float,
+            default=0.5,
+            help='Alpha parameter for SAFS adaptive threshold'
+        )
+        parser.add_argument(
+            '--diag_safs',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable SAFS diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable CMAC diagnostic justification analysis (True/False)'
+        )
+        parser.add_argument(
+            '--diag_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable DIV diagnostic justification analysis (True/False)'
+        )
+
+    elif method == 'm2a':
+        parser.add_argument(
+            '--m2a_m',
+            type=float,
+            default=0.1,
+            help='Step size for masking ratio'
+        )
+        parser.add_argument(
+            '--m2a_n',
+            type=int,
+            default=3,
+            help='Number of masking levels (including original)'
+        )
+        parser.add_argument(
+            '--m2a_lambda_erl',
+            type=float,
+            default=1.0,
+            help='Lambda for entropy ranking loss (ERL)'
+        )
+        parser.add_argument(
+            '--m2a_lambda_eml',
+            type=float,
+            default=1.0,
+            help='Lambda for entropy minimization loss (EML)'
+        )
+        parser.add_argument(
+            '--m2a_margin',
+            type=float,
+            default=0.0,
+            help='Margin for ERL (scaled by log(num_classes))'
+        )
+        parser.add_argument(
+            '--m2a_num_squares',
+            type=int,
+            default=1,
+            help='Number of spatial squares for patch masking'
+        )
+        parser.add_argument(
+            '--m2a_mask_type',
+            type=str,
+            default='binary',
+            choices=['binary', 'gaussian', 'mean'],
+            help='Mask fill type'
+        )
+        parser.add_argument(
+            '--m2a_spatial_type',
+            type=str,
+            default='patch',
+            choices=['patch', 'pixel', 'grid', 'free'],
+            help='Spatial mask layout type'
+        )
+        parser.add_argument(
+            '--m2a_spectral_type',
+            type=str,
+            default='all',
+            choices=['all', 'low', 'high'],
+            help='Spectral frequency band for spectral masking'
+        )
+        parser.add_argument(
+            '--m2a_random_masking',
+            type=str,
+            default='spatial',
+            choices=['spatial', 'spectral'],
+            help='Masking domain'
+        )
+        parser.add_argument(
+            '--m2a_disable_mcl',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Disable multi-level consistency loss (True/False)'
+        )
+        parser.add_argument(
+            '--m2a_disable_erl',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Disable entropy ranking loss (True/False)'
+        )
+        parser.add_argument(
+            '--m2a_disable_eml',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Disable entropy minimization loss (True/False)'
+        )
+        parser.add_argument(
+            '--m2a_seed',
+            type=int,
+            default=1,
+            help='RNG seed for masking (-1 for no fixed seed)'
+        )
+        parser.add_argument(
+            '--loss_ent',
+            type=lambda x: x.lower() == 'true',
+            default=True,
+            help='Enable entropy minimization loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_ent',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for entropy minimization loss'
+        )
+        parser.add_argument(
+            '--loss_div',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable class-wise diversity loss to prevent model collapse (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_div',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for diversity loss'
+        )
+        parser.add_argument(
+            '--loss_cmac',
+            type=lambda x: x.lower() == 'true',
+            default=False,
+            help='Enable Cross-Modal Anchor Consistency loss (True/False)'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p1',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC away loss'
+        )
+        parser.add_argument(
+            '--lamb_cmac_p2',
+            type=float,
+            default=1.0,
+            help='Lambda multiplier for CMAC toward loss'
         )
         parser.add_argument(
             '--module_safs',
@@ -668,6 +1169,70 @@ def add_method_specific_args(parser, method):
             type=int, 
             help='Number of classes taken to build the area pseudo label'
             )
+
+    elif method == 'tpt':
+        parser.add_argument(
+                '--n_ctx', 
+                default=4, 
+                type=int,
+            )
+
+    elif method == 'segtto':
+        parser.add_argument(
+            '--segtto_num_prompts',
+            default=5,
+            type=int,
+            help='Number of learnable prompt variants used during SegTTO adaptation'
+        )
+        parser.add_argument(
+            '--segtto_n_ctx',
+            default=4,
+            type=int,
+            help='Number of learnable context tokens per SegTTO prompt'
+        )
+        parser.add_argument(
+            '--segtto_num_augmentations',
+            default=8,
+            type=int,
+            help='Number of crop-based augmented views used by SegTTO in addition to the original view'
+        )
+        parser.add_argument(
+            '--segtto_selection_p',
+            default=0.2,
+            type=float,
+            help='Fraction of lowest-entropy views retained for SegTTO adaptation'
+        )
+        parser.add_argument(
+            '--segtto_loss_mode',
+            default='pcgrad',
+            type=str,
+            choices=('pcgrad', 'sum'),
+            help='How to combine SegTTO entropy and pseudo-label losses'
+        )
+        parser.add_argument(
+            '--segtto_lamb_ent',
+            default=1.0,
+            type=float,
+            help='Weight for the SegTTO entropy objective'
+        )
+        parser.add_argument(
+            '--segtto_lamb_ce',
+            default=1.0,
+            type=float,
+            help='Weight for the SegTTO pseudo-label cross-entropy objective'
+        )
+        parser.add_argument(
+            '--segtto_pseudo_threshold',
+            default=0.0,
+            type=float,
+            help='Optional confidence threshold for filtering SegTTO pseudo-label pixels'
+        )
+        parser.add_argument(
+            '--segtto_min_crop_scale',
+            default=0.5,
+            type=float,
+            help='Minimum relative crop size for SegTTO view generation'
+        )
 
     elif method == 'method':
         parser.add_argument(
