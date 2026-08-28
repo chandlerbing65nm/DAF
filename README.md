@@ -52,13 +52,7 @@ python main.py \
     --loss_ent True --lamb_ent 1.0 \
     --loss_div True --lamb_div 2.0 \
     --loss_cmac True --lamb_cmac 0.5 \
-    --loss_src_cons False --lamb_src_cons 0.5 \
-    --loss_feat_cons False --lamb_feat_cons 0.5 --feat_cons_type cosine \
-    --loss_feat_cons False --lamb_feat_cons 0.5 --feat_cons_type l2 \
     --module_safs True --alpha_safs 0.5 \
-    --diag_div False \
-    --diag_cmac False \
-    --diag_safs False \
     --prompt_dir prompts.yaml \
     --vision_outputs -1 -2 -3 -4 -5 -6 -7 -8 -9 \
     --alpha_cls 1.0 \
@@ -66,7 +60,7 @@ python main.py \
     --ovss_backbone ViT-B/32 \
     --token_merge False --merge_type algm \
     --algm_layers 1 7 --algm_threshold 0.8 --algm_window_size 2 2 \
-    --save_dir .save/PascalVOC20Dataset/mlmp/ \
+    --save_dir .save/PascalVOC20Dataset/dafm/ \
     --data_dir /path/to/VOCdevkit/VOC2012/ \
     --dataset PascalVOC20Dataset \
     --workers 4 \
@@ -83,12 +77,6 @@ python main.py \
     --plot_loss \
     --class_extensions \
     --reset_mode continual \
-    --domain_gen False \
-    --domain_gen_num 5 \
-    --lifelong None \
-    --lifelong_rnds 3 \
-    --save_demo False \
-    --save_k 10 \
 ```
 
 To use TENT instead, change `--method mlmp` to `--method tent` and remove the MLMP-specific arguments (`--vision_outputs`, `--alpha_cls`, `--loss_feat_cons`, `--feat_cons_type`). To evaluate on PASCAL VOC 21, change `--dataset PascalVOC20Dataset` to `--dataset PascalVOC21Dataset` and update `--save_dir` accordingly.
